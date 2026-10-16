@@ -9,7 +9,7 @@ echo "STM32L432KC Debug Script"
 echo "=========================="
 
 # Verify if firmware exists
-FIRMWARE_PATH="build/stm32l432_firmware"
+FIRMWARE_PATH="${1:-build/NUCLEO-L432KC_firmware}"
 if [ ! -f "$FIRMWARE_PATH" ]; then
     echo "Firmware not found at: $FIRMWARE_PATH"
     echo "Please run: cmake --build build --config Debug"

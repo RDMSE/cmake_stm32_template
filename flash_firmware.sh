@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script to flash the firmware on STM32L432KC via ST-Link
-# Usage: ./flash_firmware.sh
+# Usage: ./flash_firmware.sh [path/to/firmware.elf]
 
 
 set -e
@@ -10,7 +10,7 @@ echo " STM32L432KC Firmware Flash Script"
 echo "===================================="
 
 # verify if firmware exists
-FIRMWARE_PATH="build/stm32l432_firmware"
+FIRMWARE_PATH="${1:-build/NUCLEO-L432KC_firmware}"
 if [ ! -f "$FIRMWARE_PATH" ]; then
     echo " Firmware not found at: $FIRMWARE_PATH"
     echo " Please run: cmake --build build --config Debug"
