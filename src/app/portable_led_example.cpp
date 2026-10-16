@@ -13,7 +13,12 @@ extern "C" {
 #include "hal_rcc.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "crash_diag.h"
 }
+
+#ifdef CRASH_DEMO
+#include "crash_demo.h"
+#endif
 
 #include <cstring>
 
@@ -171,6 +176,9 @@ int portable_app_init(void) {
         return -1;
     }
 
+    // Report what made the previous run reset, now that the debug UART is up
+    crash_diag_report_previous();
+
     // Print system information
     print_system_info();
 
@@ -193,6 +201,12 @@ int portable_app_init(void) {
         return -3;
     }
 
+#ifdef CRASH_DEMO
+    if (crash_demo_start() != 0) {
+        return -4;
+    }
+#endif
+
     return 0;
 }
 
@@ -202,6 +216,9 @@ int portable_app_init(void) {
  * This main function is portable across all supported targets.
  */
 extern "C" int main(void) {
+    // First thing: catch faults and asserts from here on, even during init
+    crash_diag_init();
+
     // Initialize portable application
     if (portable_app_init() != 0) {
         // Error handling - could flash LED in pattern to indicate error

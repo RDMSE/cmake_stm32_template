@@ -1,0 +1,48 @@
+#pragma once
+
+/**
+ * @file crash_diag.h
+ * @brief Post-mortem crash diagnostics for Cortex-M3/M4/M7
+ *
+ * - HardFault handler that captures the stacked registers and the fault status
+ *   registers (CFSR, HFSR, MMFAR/BFAR)
+ * - Handler for emblib_assert, newlib assert() and abort()
+ * - Crash record kept in .noinit RAM and reported on the next boot
+ *
+ * On a crash the record is saved, printed on the debug UART and the MCU resets.
+ * When CRASH_DIAG_BREAK_ON_FAULT is 1 and a debugger is attached, it stops on a
+ * breakpoint first. Defaults to 1 in Debug builds and 0 otherwise.
+ *
+ * The CMSIS device header comes from CRASH_DIAG_DEVICE_HEADER (default "stm32l4xx.h").
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdbool.h>
+#include "emblib_crash_record.h"
+
+/**
+ * @brief Enable the division by zero trap and install the assert handler.
+ *        Call first thing in main(); it needs no peripheral.
+ */
+void crash_diag_init(void);
+
+/**
+ * @brief Print the reset cause and the crash record left by the previous run, then
+ *        clear the record. Call after the debug UART is initialized.
+ * @return true if a crash record was found
+ */
+bool crash_diag_report_previous(void);
+
+/**
+ * @brief Save a crash record, print it and reset. Does not return.
+ * @param reason crash reason
+ * @param msg short description, may be NULL
+ */
+__attribute__((noreturn)) void crash_diag_panic(emblib_crash_reason_t reason, const char *msg);
+
+#ifdef __cplusplus
+}
+#endif

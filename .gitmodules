@@ -1,3 +1,6 @@
 [submodule "third_party/STM32CubeL4"]
 	path = third_party/STM32CubeL4
 	url = https://github.com/STMicroelectronics/STM32CubeL4.git
+[submodule "third_party/emb_lib"]
+	path = third_party/emb_lib
+	url = https://github.com/rdmeneze/emb_lib.git

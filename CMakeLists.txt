@@ -106,6 +106,17 @@ set(COMMON_FLAGS ${TARGET_COMPILE_OPTIONS})
 include(${CMAKE_SOURCE_DIR}/cmake/hal_sources.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/freertos_sources.cmake)
 
+# emb_lib (submodule): only the portable modules used by the firmware
+set(EMBLIB_DIR ${CMAKE_SOURCE_DIR}/third_party/emb_lib)
+set(EMBLIB_SOURCES
+    ${EMBLIB_DIR}/modules/string_builder.c
+    ${EMBLIB_DIR}/modules/emblib_assert.c
+    ${EMBLIB_DIR}/modules/emblib_crash_record.c
+)
+
+# Crash demo: triggers one kind of crash per boot (see src/app/crash_demo.h)
+option(CRASH_DEMO "Build the crash diagnostics demo" OFF)
+
 # Include directories
 set(HAL_INCLUDES
     ${HAL_DIR}/Inc
@@ -118,6 +129,8 @@ set(HAL_INCLUDES
     ${SRC_DIR}/hal/stm32l4xx
     ${SRC_DIR}/bsp/common
     ${SRC_DIR}/app
+    ${SRC_DIR}/platform/cortex_m
+    ${EMBLIB_DIR}/modules
     ${FREERTOS_INCLUDES}
 )
 
@@ -167,8 +180,17 @@ set(APP_SOURCES
     ${SRC_DIR}/app/portable_led_example.cpp
     ${SRC_DIR}/app/freertos_stm32l4xx_it.c
     ${SRC_DIR}/hal/stm32l4xx/hal_gpio_stm32l4xx.c
+    ${SRC_DIR}/platform/cortex_m/crash_diag.c
+    ${SRC_DIR}/platform/cortex_m/crash_diag_freertos.c
     ${SRC_DIR}/syscalls.c
+    ${EMBLIB_SOURCES}
 )
+
+if(CRASH_DEMO)
+    list(APPEND APP_SOURCES ${SRC_DIR}/app/crash_demo.cpp)
+    # the demo relies on resets: never stop on a breakpoint
+    add_compile_definitions(CRASH_DEMO CRASH_DIAG_BREAK_ON_FAULT=0)
+endif()
 
 # Add BSP source (from target configuration)
 list(APPEND APP_SOURCES ${BSP_SOURCES})
