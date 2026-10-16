@@ -165,6 +165,7 @@ set(CMAKE_EXE_LINKER_FLAGS ${LINKER_FLAGS_STR})
 # Collect source files
 set(APP_SOURCES
     ${SRC_DIR}/app/portable_led_example.cpp
+    ${SRC_DIR}/app/freertos_stm32l4xx_it.c
     ${SRC_DIR}/hal/stm32l4xx/hal_gpio_stm32l4xx.c
     ${SRC_DIR}/syscalls.c
 )
