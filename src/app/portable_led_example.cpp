@@ -59,7 +59,7 @@ static int portable_led_init(void) {
 
     // Configure LED pin
     hal_gpio_init_t gpio_config = {0};
-    gpio_config.pin = (1U << led_pin_config->pin);
+    gpio_config.pin = led_pin_config->pin;
     gpio_config.mode = HAL_GPIO_MODE_OUTPUT_PP;
     gpio_config.pull = HAL_GPIO_NOPULL;
     gpio_config.speed = HAL_GPIO_SPEED_LOW;
@@ -72,7 +72,7 @@ static int portable_led_init(void) {
     // Set initial LED state (off)
     hal_gpio_pin_state_t initial_state = led_pin_config->active_high ? 
                                          HAL_GPIO_PIN_RESET : HAL_GPIO_PIN_SET;
-    hal_gpio_write_pin(led_port, (1U << led_pin_config->pin), initial_state);
+    hal_gpio_write_pin(led_port, led_pin_config->pin, initial_state);
 
     return 0;
 }
@@ -96,7 +96,7 @@ static void portable_led_set(bool state) {
         gpio_state = state ? HAL_GPIO_PIN_RESET : HAL_GPIO_PIN_SET;
     }
 
-    hal_gpio_write_pin(led_port, (1U << led_pin_config->pin), gpio_state);
+    hal_gpio_write_pin(led_port, led_pin_config->pin, gpio_state);
 }
 
 /**
@@ -107,7 +107,7 @@ static void portable_led_toggle(void) {
         return;
     }
 
-    hal_gpio_toggle_pin(led_port, (1U << led_pin_config->pin));
+    hal_gpio_toggle_pin(led_port, led_pin_config->pin);
 }
 
 /**

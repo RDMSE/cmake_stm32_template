@@ -325,7 +325,7 @@ int bsp_configure_pin(const bsp_pin_config_t* pin_config) {
     
     // Configure pin based on function
     hal_gpio_init_t gpio_config = {0};
-    gpio_config.pin = (1U << pin_config->pin);
+    gpio_config.pin = pin_config->pin;
     gpio_config.pull = HAL_GPIO_NOPULL;
     gpio_config.speed = HAL_GPIO_SPEED_LOW;
     gpio_config.alternate = pin_config->alternate_function;
