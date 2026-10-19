@@ -106,6 +106,13 @@ set(COMMON_FLAGS ${TARGET_COMPILE_OPTIONS})
 include(${CMAKE_SOURCE_DIR}/cmake/hal_sources.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/freertos_sources.cmake)
 
+# Family-independent headers for the code shared by all STM32 targets
+# (hal/stm32, platform/cortex_m, ...): they forward to the family headers
+file(CONFIGURE OUTPUT ${CMAKE_BINARY_DIR}/stm32_hal.h
+     CONTENT "#pragma once\n#include \"${MCU_FAMILY_LOWER}_hal.h\"\n")
+file(CONFIGURE OUTPUT ${CMAKE_BINARY_DIR}/stm32_device.h
+     CONTENT "#pragma once\n#include \"${MCU_FAMILY_LOWER}.h\"\n")
+
 # emb_lib (submodule): only the portable modules used by the firmware
 set(EMBLIB_DIR ${CMAKE_SOURCE_DIR}/third_party/emb_lib)
 set(EMBLIB_SOURCES
@@ -126,7 +133,7 @@ set(HAL_INCLUDES
     ${CMSIS_DIR}/Core/Include
     ${CMAKE_BINARY_DIR}
     ${SRC_DIR}/hal/interfaces
-    ${SRC_DIR}/hal/stm32l4xx
+    ${SRC_DIR}/hal/stm32
     ${SRC_DIR}/bsp/common
     ${SRC_DIR}/app
     ${SRC_DIR}/platform/cortex_m
@@ -178,8 +185,8 @@ set(CMAKE_EXE_LINKER_FLAGS ${LINKER_FLAGS_STR})
 # Collect source files
 set(APP_SOURCES
     ${SRC_DIR}/app/portable_led_example.cpp
-    ${SRC_DIR}/app/freertos_stm32l4xx_it.c
-    ${SRC_DIR}/hal/stm32l4xx/hal_gpio_stm32l4xx.c
+    ${SRC_DIR}/app/freertos_it.c
+    ${SRC_DIR}/hal/stm32/hal_gpio_stm32.c
     ${SRC_DIR}/platform/cortex_m/crash_diag.c
     ${SRC_DIR}/platform/cortex_m/crash_diag_freertos.c
     ${SRC_DIR}/syscalls.c
@@ -195,23 +202,10 @@ endif()
 # Add BSP source (from target configuration)
 list(APPEND APP_SOURCES ${BSP_SOURCES})
 
-# Collect all sources (get FreeRTOS sources from the cmake module)
-file(GLOB FREERTOS_ALL_SOURCES
-    "${FREERTOS_DIR}/tasks.c"
-    "${FREERTOS_DIR}/queue.c"
-    "${FREERTOS_DIR}/list.c"
-    "${FREERTOS_DIR}/timers.c"
-    "${FREERTOS_DIR}/event_groups.c"
-    "${FREERTOS_DIR}/stream_buffer.c"
-    "${FREERTOS_DIR}/croutine.c"
-    "${FREERTOS_DIR}/portable/GCC/ARM_CM4F/port.c"
-    "${FREERTOS_DIR}/portable/MemMang/heap_4.c"
-)
-
 set(ALL_SOURCES
     ${APP_SOURCES}
     ${HAL_SOURCES}
-    ${FREERTOS_ALL_SOURCES}
+    ${FREERTOS_SOURCES}
     ${STARTUP_DIR}/Src/startup_${MCU_DEVICE_LOWER}.s
     ${STARTUP_DIR}/Src/system_${MCU_FAMILY_LOWER}.c
 )
@@ -247,9 +241,6 @@ message(STATUS "  Flash Size: ${FLASH_SIZE}")
 message(STATUS "  RAM Size: ${RAM_SIZE}")
 message(STATUS "  Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "  HAL Modules: ${HAL_MODULES}")
-
-# Add subdirectories
-add_subdirectory(src)
 
 # Testing support (only if not cross-compiling)
 if(NOT CMAKE_CROSSCOMPILING)
