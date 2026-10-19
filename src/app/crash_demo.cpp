@@ -20,9 +20,14 @@ extern "C" {
 #define CRASH_DEMO_STACK_WORDS  256U
 #define OVERFLOW_STACK_WORDS    128U
 
-// first address after the 256 KB of flash: reserved, the bus answers with an error.
-// (0x60000000, the FMC bank, does not work here: it reads as 0 on the STM32L432)
+// first address after the end of the flash: reserved, the bus answers with an error
+#if defined(STM32F407xx)
+#define UNMAPPED_ADDRESS        0x08100000U  // 1 MB of flash
+#else
+// 256 KB of flash on the STM32L432 and STM32F401VC.
+// 0x60000000 (FMC bank) does not work on the L432: it reads as 0
 #define UNMAPPED_ADDRESS        0x08040000U
+#endif
 
 struct crash_demo_state {
     uint32_t magic;

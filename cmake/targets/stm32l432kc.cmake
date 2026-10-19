@@ -40,8 +40,9 @@ set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/linker/STM32L432KCUX_FLASH.ld")
 
 # Compiler flags for Cortex-M4
 
-# Startup file
+# Startup and system files
 set(STARTUP_FILE "${CMAKE_SOURCE_DIR}/startup/Src/startup_stm32l432kcux.s")
+set(SYSTEM_FILE "${CMAKE_SOURCE_DIR}/startup/Src/system_stm32l4xx.c")
 
 # HAL source path
 set(HAL_SOURCE_PATH "${CMAKE_SOURCE_DIR}/third_party/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver")
