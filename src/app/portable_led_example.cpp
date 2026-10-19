@@ -13,7 +13,12 @@ extern "C" {
 #include "hal_rcc.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "crash_diag.h"
 }
+
+#ifdef CRASH_DEMO
+#include "crash_demo.h"
+#endif
 
 #include <cstring>
 
@@ -54,7 +59,7 @@ static int portable_led_init(void) {
 
     // Configure LED pin
     hal_gpio_init_t gpio_config = {0};
-    gpio_config.pin = (1U << led_pin_config->pin);
+    gpio_config.pin = led_pin_config->pin;
     gpio_config.mode = HAL_GPIO_MODE_OUTPUT_PP;
     gpio_config.pull = HAL_GPIO_NOPULL;
     gpio_config.speed = HAL_GPIO_SPEED_LOW;
@@ -67,7 +72,7 @@ static int portable_led_init(void) {
     // Set initial LED state (off)
     hal_gpio_pin_state_t initial_state = led_pin_config->active_high ? 
                                          HAL_GPIO_PIN_RESET : HAL_GPIO_PIN_SET;
-    hal_gpio_write_pin(led_port, (1U << led_pin_config->pin), initial_state);
+    hal_gpio_write_pin(led_port, led_pin_config->pin, initial_state);
 
     return 0;
 }
@@ -91,7 +96,7 @@ static void portable_led_set(bool state) {
         gpio_state = state ? HAL_GPIO_PIN_RESET : HAL_GPIO_PIN_SET;
     }
 
-    hal_gpio_write_pin(led_port, (1U << led_pin_config->pin), gpio_state);
+    hal_gpio_write_pin(led_port, led_pin_config->pin, gpio_state);
 }
 
 /**
@@ -102,7 +107,7 @@ static void portable_led_toggle(void) {
         return;
     }
 
-    hal_gpio_toggle_pin(led_port, (1U << led_pin_config->pin));
+    hal_gpio_toggle_pin(led_port, led_pin_config->pin);
 }
 
 /**
@@ -171,6 +176,9 @@ int portable_app_init(void) {
         return -1;
     }
 
+    // Report what made the previous run reset, now that the debug UART is up
+    crash_diag_report_previous();
+
     // Print system information
     print_system_info();
 
@@ -193,6 +201,12 @@ int portable_app_init(void) {
         return -3;
     }
 
+#ifdef CRASH_DEMO
+    if (crash_demo_start() != 0) {
+        return -4;
+    }
+#endif
+
     return 0;
 }
 
@@ -202,6 +216,9 @@ int portable_app_init(void) {
  * This main function is portable across all supported targets.
  */
 extern "C" int main(void) {
+    // First thing: catch faults and asserts from here on, even during init
+    crash_diag_init();
+
     // Initialize portable application
     if (portable_app_init() != 0) {
         // Error handling - could flash LED in pattern to indicate error

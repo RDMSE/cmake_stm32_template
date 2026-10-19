@@ -16,7 +16,13 @@ extern "C" {
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx_hal_rcc.h"
 #include "stm32l4xx_hal_gpio.h"
+#include "emblib_assert.h"
 }
+
+#define DEBUG_UART              USART2
+#define DEBUG_UART_BAUDRATE     115200U
+// bounded busy-wait: a byte at 115200 baud takes ~87 us, this is well above it
+#define DEBUG_UART_TIMEOUT      100000U
 
 // =============================================================================
 // Pin Configuration for STM32L432KC Nucleo-32
@@ -208,9 +214,77 @@ int bsp_init_debug_uart(void) {
         bsp_configure_pin(tx_pin);
         bsp_configure_pin(rx_pin);
     }
-    
+
+    // 8N1, oversampling by 16, clocked from PCLK1 (reset default of USART2SEL)
+    DEBUG_UART->CR1 = 0;
+    DEBUG_UART->BRR = (HAL_RCC_GetPCLK1Freq() + DEBUG_UART_BAUDRATE / 2U) / DEBUG_UART_BAUDRATE;
+    DEBUG_UART->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
+
     return 0;
 }
+
+void bsp_debug_write(const char* data, size_t len) {
+    if (!data || !(DEBUG_UART->CR1 & USART_CR1_UE)) {
+        return;
+    }
+
+    for (size_t i = 0; i < len; i++) {
+        uint32_t timeout = DEBUG_UART_TIMEOUT;
+        while (!(DEBUG_UART->ISR & USART_ISR_TXE) && --timeout) {
+        }
+        DEBUG_UART->TDR = (uint8_t) data[i];
+    }
+}
+
+void bsp_debug_flush(void) {
+    if (!(DEBUG_UART->CR1 & USART_CR1_UE)) {
+        return;
+    }
+
+    uint32_t timeout = DEBUG_UART_TIMEOUT;
+    while (!(DEBUG_UART->ISR & USART_ISR_TC) && --timeout) {
+    }
+}
+
+const char* bsp_get_reset_cause(void) {
+    static const char* cause = nullptr;
+
+    if (!cause) {
+        const uint32_t csr = RCC->CSR;
+
+        // a watchdog or software reset also sets PINRSTF, so check those first
+        if (csr & RCC_CSR_LPWRRSTF) {
+            cause = "low-power";
+        } else if (csr & RCC_CSR_IWDGRSTF) {
+            cause = "independent watchdog";
+        } else if (csr & RCC_CSR_WWDGRSTF) {
+            cause = "window watchdog";
+        } else if (csr & RCC_CSR_SFTRSTF) {
+            cause = "software";
+        } else if (csr & RCC_CSR_BORRSTF) {
+            cause = "power-on/brown-out";
+        } else if (csr & RCC_CSR_FWRSTF) {
+            cause = "firewall";
+        } else if (csr & RCC_CSR_OBLRSTF) {
+            cause = "option byte loader";
+        } else if (csr & RCC_CSR_PINRSTF) {
+            cause = "reset pin";
+        } else {
+            cause = "unknown";
+        }
+
+        RCC->CSR |= RCC_CSR_RMVF;
+    }
+
+    return cause;
+}
+
+#ifdef USE_FULL_ASSERT
+// STM32 HAL assert_param(): a wrong parameter to the HAL is a programming error
+extern "C" void assert_failed(uint8_t* file, uint32_t line) {
+    emblib_assert_fail(true, reinterpret_cast<const char*>(file), line, nullptr, nullptr);
+}
+#endif
 
 const bsp_pin_config_t* bsp_get_pin_config(const char* pin_name) {
     for (uint32_t i = 0; i < stm32l432kc_config.pin_count; i++) {
@@ -251,7 +325,7 @@ int bsp_configure_pin(const bsp_pin_config_t* pin_config) {
     
     // Configure pin based on function
     hal_gpio_init_t gpio_config = {0};
-    gpio_config.pin = (1U << pin_config->pin);
+    gpio_config.pin = pin_config->pin;
     gpio_config.pull = HAL_GPIO_NOPULL;
     gpio_config.speed = HAL_GPIO_SPEED_LOW;
     gpio_config.alternate = pin_config->alternate_function;

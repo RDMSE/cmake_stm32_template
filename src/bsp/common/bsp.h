@@ -14,6 +14,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 // Forward declarations
 typedef struct bsp_config bsp_config_t;
@@ -121,6 +122,27 @@ int bsp_init_system_clock(void);
  * @return 0 on success, negative error code on failure
  */
 int bsp_init_debug_uart(void);
+
+/**
+ * @brief Write to the debug UART by polling its registers (no HAL, no interrupts)
+ *
+ * Safe to call from fault handlers. Data is dropped while the UART is not initialized.
+ * @param data bytes to send
+ * @param len number of bytes
+ */
+void bsp_debug_write(const char* data, size_t len);
+
+/**
+ * @brief Wait until the debug UART has sent everything (bounded wait)
+ */
+void bsp_debug_flush(void);
+
+/**
+ * @brief Cause of the last reset, read from the reset flags on the first call
+ *        (the flags are cleared afterwards)
+ * @return Static string describing the reset cause
+ */
+const char* bsp_get_reset_cause(void);
 
 /**
  * @brief Get pin configuration by name

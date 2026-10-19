@@ -5,6 +5,7 @@
 
 #include <sys/stat.h>
 #include <errno.h>
+#include "bsp.h"
 
 #undef errno
 extern int errno;
@@ -41,9 +42,8 @@ int _getpid(void) {
  */
 int _write(int file, char *ptr, int len) {
     (void)file;
-    (void)ptr;
-    (void)len;
-    return 0;
+    bsp_debug_write(ptr, (size_t)len);
+    return len;
 }
 
 /**

@@ -46,6 +46,8 @@ target_include_directories(freertos_sources PRIVATE
     ${CMAKE_SOURCE_DIR}/third_party/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc
     ${STARTUP_DIR}/Inc
     ${SRC_DIR}
+    # FreeRTOSConfig.h maps configASSERT to emblib_assert
+    ${CMAKE_SOURCE_DIR}/third_party/emb_lib/modules
 )
 
 # Compilation options for FreeRTOS
