@@ -20,8 +20,9 @@ extern "C" {
 #define CRASH_DEMO_STACK_WORDS  256U
 #define OVERFLOW_STACK_WORDS    128U
 
-// an address with nothing behind it on the STM32L432 (FMC bank 1, not present)
-#define UNMAPPED_ADDRESS        0x60000000U
+// first address after the 256 KB of flash: reserved, the bus answers with an error.
+// (0x60000000, the FMC bank, does not work here: it reads as 0 on the STM32L432)
+#define UNMAPPED_ADDRESS        0x08040000U
 
 struct crash_demo_state {
     uint32_t magic;
@@ -127,6 +128,11 @@ static void crash_demo_task(void* param) {
 
     vTaskDelay(pdMS_TO_TICKS(CRASH_DEMO_DELAY_MS));
     current.run();
+
+    // only the recoverable assert is expected to get here
+    if (current.run != recoverable_assert) {
+        demo_print("[DEMO] unexpected: this step did not crash\r\n");
+    }
 
     if (demo_state.step >= demo_step_count) {
         demo_print("[DEMO] done, press reset to run it again\r\n");

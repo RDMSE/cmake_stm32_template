@@ -103,7 +103,7 @@ __attribute__((noreturn)) static void crash_diag_stop(void) {
     NVIC_SystemReset();
 }
 
-static void crash_diag_save_and_print(const emblib_crash_record_t *data, const char *tag) {
+static void crash_diag_save_and_print(const emblib_crash_record_t *data) {
     char report[CRASH_DIAG_REPORT_LEN];
     string_builder_t sb;
 
@@ -117,9 +117,7 @@ static void crash_diag_save_and_print(const emblib_crash_record_t *data, const c
     sb_init(&sb, report, sizeof(report));
     emblib_crash_record_format(&shown, &sb);
 
-    diag_print("\r\n[");
-    diag_print(tag);
-    diag_print("] ");
+    diag_print("\r\n[CRASH] ");
     diag_print(report);
     diag_print(saved ? "\r\n" : "\r\n(not saved: a previous crash record is pending)\r\n");
 }
@@ -182,7 +180,7 @@ __attribute__((used, noreturn)) void crash_diag_fault_handler_c(const exception_
     append_fault_bits(&sb, cfsr, cfsr_bits, sizeof(cfsr_bits) / sizeof(cfsr_bits[0]));
     append_fault_bits(&sb, hfsr, hfsr_bits, sizeof(hfsr_bits) / sizeof(hfsr_bits[0]));
 
-    crash_diag_save_and_print(&data, "FAULT");
+    crash_diag_save_and_print(&data);
     crash_diag_stop();
 }
 
@@ -212,8 +210,12 @@ void crash_diag_panic(emblib_crash_reason_t reason, const char *msg) {
     memset(&data, 0, sizeof(data));
     data.reason = reason;
     data.lr = (uint32_t) __builtin_return_address(0);
-    data.sp = __get_MSP();
     data.psr = __get_xPSR();
+
+    // the stack in use (PSP inside a task, MSP in an ISR or before the scheduler)
+    uint32_t sp;
+    __asm volatile("mov %0, sp" : "=r"(sp));
+    data.sp = sp;
 
     if (msg) {
         string_builder_t sb;
@@ -221,7 +223,7 @@ void crash_diag_panic(emblib_crash_reason_t reason, const char *msg) {
         sb_append_str(&sb, msg);
     }
 
-    crash_diag_save_and_print(&data, emblib_crash_reason_str(reason));
+    crash_diag_save_and_print(&data);
     crash_diag_stop();
 }
 
