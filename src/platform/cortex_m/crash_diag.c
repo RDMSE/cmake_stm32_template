@@ -12,7 +12,7 @@
 #include <string.h>
 
 #ifndef CRASH_DIAG_DEVICE_HEADER
-#define CRASH_DIAG_DEVICE_HEADER "stm32l4xx.h"
+#define CRASH_DIAG_DEVICE_HEADER "stm32_device.h"
 #endif
 #include CRASH_DIAG_DEVICE_HEADER
 
