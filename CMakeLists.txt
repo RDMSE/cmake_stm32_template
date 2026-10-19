@@ -187,6 +187,7 @@ set(APP_SOURCES
     ${SRC_DIR}/app/portable_led_example.cpp
     ${SRC_DIR}/app/freertos_it.c
     ${SRC_DIR}/hal/stm32/hal_gpio_stm32.c
+    ${SRC_DIR}/bsp/common/bsp_common.cpp
     ${SRC_DIR}/platform/cortex_m/crash_diag.c
     ${SRC_DIR}/platform/cortex_m/crash_diag_freertos.c
     ${SRC_DIR}/syscalls.c
@@ -206,8 +207,8 @@ set(ALL_SOURCES
     ${APP_SOURCES}
     ${HAL_SOURCES}
     ${FREERTOS_SOURCES}
-    ${STARTUP_DIR}/Src/startup_${MCU_DEVICE_LOWER}.s
-    ${STARTUP_DIR}/Src/system_${MCU_FAMILY_LOWER}.c
+    ${STARTUP_FILE}
+    ${SYSTEM_FILE}
 )
 
 # Create executable
