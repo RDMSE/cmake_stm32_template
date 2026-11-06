@@ -12,7 +12,7 @@
 #include <string.h>
 
 #ifndef CRASH_DIAG_DEVICE_HEADER
-#define CRASH_DIAG_DEVICE_HEADER "stm32l4xx.h"
+#define CRASH_DIAG_DEVICE_HEADER "stm32_device.h"
 #endif
 #include CRASH_DIAG_DEVICE_HEADER
 
@@ -135,7 +135,8 @@ static void append_fault_bits(string_builder_t *sb, uint32_t reg, const fault_bi
 
 static bool frame_in_ram(const exception_frame_t *frame) {
     const uint32_t addr = (uint32_t) frame;
-    return addr >= (uint32_t) &_sdata && addr + sizeof(*frame) <= (uint32_t) &_estack;
+    // subtract from the end: with a corrupted SP, addr + sizeof(*frame) could wrap around
+    return addr >= (uint32_t) &_sdata && addr <= (uint32_t) &_estack - sizeof(*frame) && (addr & 3u) == 0u;
 }
 
 /**

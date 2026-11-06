@@ -3,7 +3,7 @@
 # Script to flash the firmware via ST-Link (OpenOCD) or SEGGER J-Link
 #
 # Usage: ./flash_firmware.sh [-t target] [-p probe] [path/to/firmware.elf]
-#   -t target   stm32l432kc (default) or stm32f407vg
+#   -t target   stm32l432kc (default), stm32f401vc or stm32f407vg
 #   -p probe    auto (default), jlink or stlink
 #               auto picks J-Link when a SEGGER probe is connected (including
 #               an on-board ST-Link reflashed as J-Link OB), ST-Link otherwise
@@ -35,13 +35,18 @@ case "$TARGET" in
         JLINK_DEVICE="STM32L432KC"
         OPENOCD_TARGET="stm32l4x"
         ;;
+    stm32f401vc)
+        BOARD="STM32F401CDISCOVERY"
+        JLINK_DEVICE="STM32F401VC"
+        OPENOCD_TARGET="stm32f4x"
+        ;;
     stm32f407vg)
         BOARD="STM32F4DISCOVERY"
         JLINK_DEVICE="STM32F407VG"
         OPENOCD_TARGET="stm32f4x"
         ;;
     *)
-        echo " Unknown target: $TARGET (use stm32l432kc or stm32f407vg)"
+        echo " Unknown target: $TARGET (use stm32l432kc, stm32f401vc or stm32f407vg)"
         exit 1
         ;;
 esac

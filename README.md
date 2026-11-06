@@ -26,10 +26,24 @@
 ```
 
 ## 3. Build the project
+
+### With Docker (no toolchain needed on the machine)
 ```bash
-    mkdir build && cd build
-    cmake .. -GNinja -DCMAKE_TOOLCHAIN_FILE=cmake/arm-gcc-toolchain.cmake
-    ninja
+    ./docker/build.sh                          # STM32L432KC, Debug
+    ./docker/build.sh -t stm32f401vc --demo    # STM32F401C-DISCO, crash demo
+    ./docker/build.sh -t stm32f407vg -b Release
+    ./docker/build.sh --tests                  # host unit tests
+```
+The build image (Ubuntu 24.04 + Arm GNU Toolchain 14.2) is built on first use.
+The output goes to `build/<target>-<build_type>[-demo]` and is identical to a
+native build. Flashing runs on the host (it needs the USB probe).
+
+### Native
+Requires the Arm GNU Toolchain 14.2 in `/opt` or in `ARM_GCC_TOOLCHAIN_PATH`.
+```bash
+    cmake -B build -GNinja -DCMAKE_TOOLCHAIN_FILE=cmake/arm-gcc-toolchain.cmake \
+          -DTARGET_BOARD=stm32l432kc   # or stm32f401vc, stm32f407vg
+    cmake --build build
 ```
 
 ## 4. Quick Start
@@ -40,8 +54,8 @@ cmake --build build --config Release
 # Run tests
 ./run_tests.sh
 
-# Flash firmware
-./flash_firmware.sh
+# Flash firmware (J-Link or ST-Link, detected automatically)
+./flash_firmware.sh -t stm32l432kc build/stm32l432kc-debug/NUCLEO-L432KC_firmware
 
 # Debug
 ./debug_firmware.sh
