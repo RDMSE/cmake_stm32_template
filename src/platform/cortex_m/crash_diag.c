@@ -135,7 +135,8 @@ static void append_fault_bits(string_builder_t *sb, uint32_t reg, const fault_bi
 
 static bool frame_in_ram(const exception_frame_t *frame) {
     const uint32_t addr = (uint32_t) frame;
-    return addr >= (uint32_t) &_sdata && addr + sizeof(*frame) <= (uint32_t) &_estack;
+    // subtract from the end: with a corrupted SP, addr + sizeof(*frame) could wrap around
+    return addr >= (uint32_t) &_sdata && addr <= (uint32_t) &_estack - sizeof(*frame) && (addr & 3u) == 0u;
 }
 
 /**
